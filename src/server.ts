@@ -1,12 +1,33 @@
 import express, { Application, Request, Response } from 'express';
-import dotenv from 'dotenv'
+import dotenv from 'dotenv';
 import { connectToDatabase } from './config/database';
+import { errorHandler } from './middleware/errorHandler';
+import amenityRoutes from './routes/Amenity';
+import serviceRoutes from './routes/Service';
+import propertyRoutes from './routes/Property'
 
 dotenv.config();
 
-const app = express();
+const app: Application = express();
 const port = process.env.PORT || 3000;
 
+app.use(express.json());
+
+// Routes
+app.use('/api/amenities', amenityRoutes);
+app.use('/api/services', serviceRoutes);
+app.use('/api/poperties', propertyRoutes);
+
+// 404 Not Found Handler
+app.use((req, res) => {
+  return res.status(404).json({
+    success: false,
+    message: "Route not found",
+  });
+});
+
+// Global Error Handler
+app.use(errorHandler);
 
 const startServer = async () => {
   try {
@@ -17,6 +38,6 @@ const startServer = async () => {
   } catch (error) {
     console.log('Error starting server:', error);
   }
-}
+};
 
 startServer();
