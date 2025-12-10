@@ -5,6 +5,8 @@ import { errorHandler } from './middleware/errorHandler';
 import amenityRoutes from './routes/Amenity';
 import serviceRoutes from './routes/Service';
 import propertyRoutes from './routes/Property'
+import userRoutes from './routes/User'
+import cors from 'cors';
 
 dotenv.config();
 
@@ -13,12 +15,15 @@ const port = process.env.PORT || 3000;
 
 app.use(express.json());
 
-// Routes
+app.use(cors({
+  origin: "http://localhost:3000"
+}));
+
 app.use('/api/amenities', amenityRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/poperties', propertyRoutes);
+app.use('/api/users',userRoutes)
 
-// 404 Not Found Handler
 app.use((req, res) => {
   return res.status(404).json({
     success: false,
@@ -26,7 +31,6 @@ app.use((req, res) => {
   });
 });
 
-// Global Error Handler
 app.use(errorHandler);
 
 const startServer = async () => {
