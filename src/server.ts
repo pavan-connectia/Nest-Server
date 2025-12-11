@@ -7,6 +7,7 @@ import serviceRoutes from './routes/Service';
 import propertyRoutes from './routes/Property'
 import userRoutes from './routes/User'
 import cors from 'cors';
+import path from "path";
 
 dotenv.config();
 
@@ -18,6 +19,9 @@ app.use(express.json());
 app.use(cors({
   origin: "http://localhost:3000"
 }));
+
+app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
+
 
 app.use('/api/amenities', amenityRoutes);
 app.use('/api/services', serviceRoutes);

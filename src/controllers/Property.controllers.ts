@@ -17,7 +17,18 @@ export const createProperty = async (req: Request, res: Response) => {
       status,
     } = req.body;
 
-    if (!name || !gender || !location || !images || !roomTypes) {
+    const imageFiles = req.files && (req.files as any).images;
+    const videoFiles = req.files && (req.files as any).videos;
+
+    const imageUrls = imageFiles
+      ? imageFiles.map((file: any) => `/uploads/images/${file.filename}`)
+      : [];
+
+    const videoUrls = videoFiles
+      ? videoFiles.map((file: any) => `/uploads/videos/${file.filename}`)
+      : [];
+
+    if (!name || !gender || !location || !roomTypes || roomTypes.length === 0 || !amenities || !services || !imageFiles) {
       return res.status(400).json({ message: "Required fields are missing" });
     }
 
@@ -29,8 +40,8 @@ export const createProperty = async (req: Request, res: Response) => {
       roomTypes,
       amenities,
       services,
-      images,
-      videos,
+      images: imageUrls,
+      videos: videoUrls,
       status,
     });
 

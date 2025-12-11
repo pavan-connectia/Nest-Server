@@ -6,11 +6,19 @@ import {
   updateProperty,
   deleteProperty,
 } from "../controllers/Property.controllers";
+import { upload } from "../middleware/multer";
 
 const router = Router();
 
 // Create property
-router.post("/", createProperty);
+router.post(
+  "/",
+  upload.fields([
+    { name: "images", maxCount: 10 },
+    { name: "videos", maxCount: 5 },
+  ]),
+  createProperty
+);
 
 // Get all properties
 router.get("/", getAllProperties);
