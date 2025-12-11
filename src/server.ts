@@ -25,7 +25,7 @@ app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 app.use('/api/amenities', amenityRoutes);
 app.use('/api/services', serviceRoutes);
-app.use('/api/poperties', propertyRoutes);
+app.use('/api/properties', propertyRoutes);
 app.use('/api/users',userRoutes)
 
 app.use((req, res) => {

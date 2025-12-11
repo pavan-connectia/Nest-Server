@@ -7,29 +7,35 @@ import {
   deleteProperty,
 } from "../controllers/Property.controllers";
 import { upload } from "../middleware/multer";
+import { auth } from "../middleware/auth";
 
 const router = Router();
 
-// Create property
+
 router.post(
   "/",
   upload.fields([
     { name: "images", maxCount: 10 },
     { name: "videos", maxCount: 5 },
-  ]),
+  ]), auth,
   createProperty
 );
 
-// Get all properties
 router.get("/", getAllProperties);
 
-// Get single property by ID
 router.get("/:id", getPropertyById);
 
-// Update property
-router.put("/:id", updateProperty);
+router.put(
+  "/:id",
+  auth,
+  upload.fields([
+    { name: "images", maxCount: 10 },
+    { name: "videos", maxCount: 5 },
+  ]),
+  updateProperty
+);
 
-// Delete property
-router.delete("/:id", deleteProperty);
+
+router.delete("/:id", auth, deleteProperty);
 
 export default router;

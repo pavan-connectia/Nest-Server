@@ -1,7 +1,6 @@
 import multer from "multer";
 import path from "path";
 
-// Storage config
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     if (file.mimetype.startsWith("image")) {
@@ -19,7 +18,6 @@ const storage = multer.diskStorage({
   },
 });
 
-// File filter
 const fileFilter = (req: any, file: any, cb: any) => {
   if (file.mimetype.startsWith("image") || file.mimetype.startsWith("video")) {
     cb(null, true);
@@ -31,5 +29,5 @@ const fileFilter = (req: any, file: any, cb: any) => {
 export const upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 50 * 1024 * 1024 }, // 50 MB
+  limits: { fileSize: 50 * 1024 * 1024 },
 });
