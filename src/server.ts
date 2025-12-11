@@ -17,8 +17,12 @@ const port = process.env.PORT || 3000;
 app.use(express.json());
 
 app.use(cors({
-  origin: "http://localhost:3000"
+  origin: [
+    "http://localhost:3000",
+    "https://nest-admin-dashboard.vercel.app"
+  ]
 }));
+
 
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
