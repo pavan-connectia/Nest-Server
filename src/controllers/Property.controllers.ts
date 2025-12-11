@@ -156,8 +156,6 @@ export const updateProperty = async (req: Request, res: Response) => {
       };
     }
 
-    console.log("Parsed location:", location); 
-
     const roomTypes: any[] = [];
 
     Object.keys(body).forEach((key) => {

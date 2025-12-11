@@ -28,6 +28,13 @@ app.use('/api/services', serviceRoutes);
 app.use('/api/properties', propertyRoutes);
 app.use('/api/users',userRoutes)
 
+app.use((req,res)=>{
+    return res.status(200).json({
+    success: true,
+    message: "Api is running",
+  });
+})
+
 app.use((req, res) => {
   return res.status(404).json({
     success: false,
