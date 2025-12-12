@@ -8,6 +8,7 @@ import propertyRoutes from './routes/Property'
 import userRoutes from './routes/User'
 import cors from 'cors';
 import path from "path";
+import contactRoutes from "./routes/Contact";
 
 dotenv.config();
 
@@ -30,6 +31,7 @@ app.use('/api/amenities', amenityRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/properties', propertyRoutes);
 app.use('/api/users',userRoutes)
+app.use("/api/contact", contactRoutes);
 
 app.use((req,res)=>{
     return res.status(200).json({
