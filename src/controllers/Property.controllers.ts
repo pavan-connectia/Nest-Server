@@ -14,6 +14,7 @@ export const createProperty = async (req: Request, res: Response) => {
       services,
       images,
       videos,
+      foodMenu,
       status,
     } = req.body;
 
@@ -28,7 +29,7 @@ export const createProperty = async (req: Request, res: Response) => {
       ? videoFiles.map((file: any) => `/uploads/videos/${file.filename}`)
       : [];
 
-    if (!name || !gender || !location || !roomTypes || roomTypes.length === 0 || !amenities || !services || !imageFiles) {
+    if (!name || !gender || !location || !roomTypes || roomTypes.length === 0 || !amenities || !services || !imageFiles || !foodMenu) {
       return res.status(400).json({ message: "Required fields are missing" });
     }
 
@@ -40,6 +41,7 @@ export const createProperty = async (req: Request, res: Response) => {
       roomTypes,
       amenities,
       services,
+      foodMenu,
       images: imageUrls,
       videos: videoUrls,
       status,
@@ -137,22 +139,27 @@ export const updateProperty = async (req: Request, res: Response) => {
     const { id } = req.params;
     const body = req.body;
 
+    const existing = await Property.findById(id);
+    if (!existing) {
+      return res.status(404).json({ message: "Property not found" });
+    }
+
     let location;
     if (body.location && typeof body.location === 'object') {
       location = {
-        city: body.location.city || "",
-        area: body.location.area || "",
-        address: body.location.address || "",
-        latitude: Number(body.location.latitude) || 0,
-        longitude: Number(body.location.longitude) || 0,
+        city: body.location.city || existing.location.city,
+        area: body.location.area || existing.location.area,
+        address: body.location.address || existing.location.address,
+        latitude: Number(body.location.latitude) || existing.location.latitude || 0,
+        longitude: Number(body.location.longitude) || existing.location.longitude || 0,
       };
     } else {
       location = {
-        city: body["location.city"] || body["location[city]"] || "",
-        area: body["location.area"] || body["location[area]"] || "",
-        address: body["location.address"] || body["location[address]"] || "",
-        latitude: Number(body["location.latitude"] || body["location[latitude]"] || 0),
-        longitude: Number(body["location.longitude"] || body["location[longitude]"] || 0),
+        city: body["location.city"] || body["location[city]"] || existing.location.city,
+        area: body["location.area"] || body["location[area]"] || existing.location.area,
+        address: body["location.address"] || body["location[address]"] || existing.location.address,
+        latitude: Number(body["location.latitude"] || body["location[latitude]"] || existing.location.latitude || 0),
+        longitude: Number(body["location.longitude"] || body["location[longitude]"] || existing.location.longitude || 0),
       };
     }
 
@@ -180,6 +187,34 @@ export const updateProperty = async (req: Request, res: Response) => {
           pricePerMonth: Number(room.pricePerMonth) || 0,
           capacity: Number(room.capacity) || 0,
           availableRooms: Number(room.availableRooms) || 0,
+        });
+      });
+    }
+
+    const foodMenu: any[] = [];
+
+    Object.keys(body).forEach((key) => {
+      const match = key.match(/foodMenu\[(\d+)\]\[(\w+)\]/);
+      if (match) {
+        const index = Number(match[1]);
+        const field = match[2];
+        if (!foodMenu[index]) foodMenu[index] = {};
+        
+        if (field === 'day') {
+          foodMenu[index][field] = body[key] || '';
+        } else {
+          foodMenu[index][field] = body[key] || '';
+        }
+      }
+    });
+
+    if (foodMenu.length === 0 && Array.isArray(body.foodMenu)) {
+      body.foodMenu.forEach((menu: any) => {
+        foodMenu.push({
+          day: menu.day || '',
+          breakfast: menu.breakfast || '',
+          lunch: menu.lunch || '',
+          dinner: menu.dinner || '',
         });
       });
     }
@@ -212,12 +247,8 @@ export const updateProperty = async (req: Request, res: Response) => {
       ? files.videos.map((f) => `/uploads/videos/${f.filename}`)
       : [];
 
-    const existing = await Property.findById(id);
-    if (!existing)
-      return res.status(404).json({ message: "Property not found" });
-
-    const images = [...(existing.images ?? []), ...(newImages ?? [])];
-    const videos = [...(existing.videos ?? []), ...(newVideos ?? [])];
+    const images = [...(existing.images || []), ...newImages];
+    const videos = [...(existing.videos || []), ...newVideos];
 
     const updateData: any = {
       name: body.name || existing.name,
@@ -225,18 +256,32 @@ export const updateProperty = async (req: Request, res: Response) => {
       gender: body.gender || existing.gender,
       propertyType: body.propertyType || existing.propertyType,
       status: body.status || existing.status,
-      location: location.city ? location : existing.location,
+      location: location,
       roomTypes: roomTypes.length > 0 ? roomTypes : existing.roomTypes,
+      foodMenu: foodMenu.length > 0 ? foodMenu : existing.foodMenu,
       amenities: amenities.length > 0 ? amenities : existing.amenities,
       services: services.length > 0 ? services : existing.services,
       images,
       videos,
     };
 
+    if (!body.name) delete updateData.name;
+    if (!body.description) delete updateData.description;
+    if (!body.gender) delete updateData.gender;
+    if (!body.propertyType) delete updateData.propertyType;
+    if (!body.status) delete updateData.status;
+    if (!location.city) delete updateData.location;
+    if (roomTypes.length === 0) delete updateData.roomTypes;
+    if (foodMenu.length === 0) delete updateData.foodMenu;
+    if (amenities.length === 0) delete updateData.amenities;
+    if (services.length === 0) delete updateData.services;
+    if (newImages.length === 0) delete updateData.images;
+    if (newVideos.length === 0) delete updateData.videos;
+
     const updated = await Property.findByIdAndUpdate(
       id,
       updateData,
-      { new: true }
+      { new: true, runValidators: true }
     )
       .populate("amenities")
       .populate("services");
@@ -248,6 +293,23 @@ export const updateProperty = async (req: Request, res: Response) => {
     });
   } catch (err: any) {
     console.error("Update error:", err.message || err);
+    
+    if (err.name === 'ValidationError') {
+      return res.status(400).json({
+        success: false,
+        message: "Validation error",
+        errors: Object.values(err.errors).map((error: any) => error.message)
+      });
+    }
+
+    if (err.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: "Duplicate field value entered",
+        field: Object.keys(err.keyPattern)[0]
+      });
+    }
+
     res.status(500).json({
       success: false,
       message: "Internal server error",
