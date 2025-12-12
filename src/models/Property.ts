@@ -15,8 +15,8 @@ export interface IProperty extends Document {
   };
 
   roomTypes: Array<{
-    type: string;               
-    pricePerMonth: number; 
+    type: string;
+    pricePerMonth: number;
     capacity: number;
     availableRooms: number;
   }>;
@@ -26,6 +26,13 @@ export interface IProperty extends Document {
 
   images: string[];
   videos?: string[];
+
+  foodMenu?: Array<{
+    day: string;
+    breakfast: string;
+    lunch: string;
+    dinner: string;
+  }>;
 
   status: "available" | "waiting" | "closed";
 }
@@ -108,6 +115,15 @@ const PropertySchema: Schema = new Schema(
     videos: [
       {
         type: String,
+      },
+    ],
+
+        foodMenu: [
+      {
+        day: { type: String, required: true },
+        breakfast: { type: String, required: true },
+        lunch: { type: String, required: true },
+        dinner: { type: String, required: true },
       },
     ],
 
