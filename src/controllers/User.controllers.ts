@@ -39,8 +39,7 @@ export const login = async (req: Request, res: Response) => {
                 success: false
             });
         }
-
-        const isProduction = process.env.NODE_ENV === "production";
+        
         const age = 7 * 24 * 60 * 60;
 
         if (!process.env.JWT_SECRET) {
