@@ -20,7 +20,8 @@ app.use(express.json());
 app.use(cors({
   origin: [
     "http://localhost:3000",
-    "https://nest-admin-dashboard.vercel.app"
+    "https://nest-admin-dashboard.vercel.app",
+    "https://nest-client-bay.vercel.app"
   ]
 }));
 
