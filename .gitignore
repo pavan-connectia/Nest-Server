@@ -14,3 +14,5 @@ coverage
 *.seed
 *.pid.lock
 *.swp
+
+/dist
