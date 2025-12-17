@@ -60,55 +60,101 @@ export const createProperty = async (req: Request, res: Response) => {
 };
 
 // GET ALL PROPERTIES
-export const getAllProperties = async (req: Request, res: Response) => {
+export const getAllProperties = async (
+  req: Request,
+  res: Response
+) => {
   try {
     const {
-      name,
       city,
       area,
       gender,
+      propertyType,
       status,
-      sharing,
+      roomType,
       minPrice,
       maxPrice,
+      capacity,
+      search,
+      page = "1",
+      limit = "10",
+      sortBy = "createdAt",
+      order = "desc",
     } = req.query;
 
-    let filter: any = {};
+    const filter: any = {};
 
-    if (name) {
-      filter.name = { $regex: name, $options: "i" };
-    }
+    if (city) filter["location.city"] = city;
+    if (area) filter["location.area"] = area;
 
-    if (city) filter["location.city"] = { $regex: city, $options: "i" };
-    if (area) filter["location.area"] = { $regex: area, $options: "i" };
     if (gender) filter.gender = gender;
+    if (propertyType) filter.propertyType = propertyType;
     if (status) filter.status = status;
 
-    if (minPrice || maxPrice) {
-      filter["roomTypes.pricePerMonth"] = {};
-      if (minPrice) filter["roomTypes.pricePerMonth"]["$gte"] = Number(minPrice);
-      if (maxPrice) filter["roomTypes.pricePerMonth"]["$lte"] = Number(maxPrice);
+    if (search) {
+      filter.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { "location.address": { $regex: search, $options: "i" } },
+      ];
     }
 
-    if (sharing) {
-      filter["roomTypes.type"] = { $regex: sharing, $options: "i" };
+    if (roomType || minPrice || maxPrice || capacity) {
+      filter.roomTypes = { $elemMatch: {} };
+
+      if (roomType) {
+        filter.roomTypes.$elemMatch.type = roomType;
+      }
+
+      if (capacity) {
+        filter.roomTypes.$elemMatch.capacity = {
+          $gte: Number(capacity),
+        };
+      }
+
+      if (minPrice || maxPrice) {
+        filter.roomTypes.$elemMatch.pricePerMonth = {};
+        if (minPrice)
+          filter.roomTypes.$elemMatch.pricePerMonth.$gte =
+            Number(minPrice);
+        if (maxPrice)
+          filter.roomTypes.$elemMatch.pricePerMonth.$lte =
+            Number(maxPrice);
+      }
     }
 
-    const properties = await Property.find(filter)
-      .populate("amenities")
-      .populate("services")
-      .sort({ createdAt: -1 });
+    const pageNum = Number(page);
+    const limitNum = Number(limit);
+    const skip = (pageNum - 1) * limitNum;
+
+    const sortOrder = order === "asc" ? 1 : -1;
+
+    const [properties, total] = await Promise.all([
+      Property.find(filter)
+        .sort({ [sortBy as string]: sortOrder })
+        .skip(skip)
+        .limit(limitNum)
+        .lean(),
+      Property.countDocuments(filter),
+    ]);
 
     return res.status(200).json({
-      message: "Properties fetched successfully",
-      results: properties.length,
+      success: true,
       data: properties,
+      pagination: {
+        total,
+        page: pageNum,
+        limit: limitNum,
+        totalPages: Math.ceil(total / limitNum),
+      },
     });
   } catch (error) {
-    console.error("Error fetching properties:", error);
-    return res.status(500).json({ message: "Internal server error", error });
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch properties",
+    });
   }
 };
+
 
 
 // GET PROPERTY BY ID
@@ -318,8 +364,6 @@ export const updateProperty = async (req: Request, res: Response) => {
   }
 };
 
-
-
 // DELETE PROPERTY
 export const deleteProperty = async (req: Request, res: Response) => {
   try {
@@ -340,6 +384,9 @@ export const deleteProperty = async (req: Request, res: Response) => {
     return res.status(500).json({ message: "Internal server error", error });
   }
 };
+
+
+
 
 
 
